@@ -15,11 +15,11 @@ class DataBase(metaclass=Singleton):
     __conn = None
     __cursor = None
     __config = {
-        "host": "127.0.0.1",
-        "user": "root",
-        "password": "123456ABC",
         "database": "vest",
+        "host": "127.0.0.1",
+        "password": "123456ABC",
         "port": 3307,
+        "user": "root"
     }
     def __init__(self):
         self.__connect()

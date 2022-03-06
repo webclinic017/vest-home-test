@@ -1,5 +1,5 @@
-import logging
 from datetime import date
+import logging
 
 logging.basicConfig(
     level="ERROR",

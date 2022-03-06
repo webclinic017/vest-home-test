@@ -22,6 +22,10 @@ docker-compose up -d
 pipenv run server
 ```
 
+### Usage
+
+You can use this api on http://127.0.0.1:8000/docs#/, but if this port is already in use it can be changed on pipfile 
+
 ### Example usage
 
 Make a POST /nasdaq/trade

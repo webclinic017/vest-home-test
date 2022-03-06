@@ -1,15 +1,14 @@
-from xmlrpc.client import boolean
-from fastapi import APIRouter, HTTPException
-import requests
 from ..models.nasdaq import *
 from ..services.database import *
+from fastapi import APIRouter, HTTPException
+import requests
 
 router = APIRouter()
 
 def evaluate_symbol(data, today: bool = False):
-    symbol: str = data["symbol"]
     date_from = ""
     date_to = ""
+    symbol: str = data["symbol"]
     if "dateFrom" in data and data["dateFrom"]:
         date_from = "&date_from=" +  data["dateFrom"]
         
@@ -40,9 +39,9 @@ def evaluate_symbol(data, today: bool = False):
 @router.post("/trade", response_model=TradeResponse)
 async def trade(trade: TradeRequest):
     evaluate = {
-        "symbol": trade.symbol,
         "action": trade.action,
-        "shares": trade.shares
+        "shares": trade.shares,
+        "symbol": trade.symbol
     }
     symbol_status = evaluate_symbol(evaluate, today=True)
     if not symbol_status or len(symbol_status["data"]) == 0:
@@ -54,10 +53,10 @@ async def trade(trade: TradeRequest):
         date_time = date_time[0:10]
         order = {
             "action": "buy",
-            "symbol": trade.symbol,
+            "datetime": date_time,
             "price": symbol_values["open"],
             "shares": trade.shares,
-            "datetime": date_time
+            "symbol": trade.symbol,
         }
         save_order = DataBase()
         save_order.update_status(order)
@@ -72,10 +71,10 @@ async def trade(trade: TradeRequest):
         date_time = date_time[0:10]
         order = {
             "action": "sell",
-            "symbol": trade.symbol,
+            "datetime": date_time,
             "price": symbol_values["open"],
             "shares": trade.shares,
-            "datetime": date_time
+            "symbol": trade.symbol
         }
         save_order = DataBase()
         save_order.update_status(order)
@@ -120,16 +119,16 @@ async def view_history(history: StocksRequest):
         })
         
     response = {
-        "shares": status["shares"]["amount"],
-        "currentPrice":  symbol_values["open"],
         "curentValue": status["shares"]["amount"] * symbol_values["open"],
+        "currentPrice":  symbol_values["open"],
+        "history": day_values,
+        "shares": status["shares"]["amount"],
         "dayValues":{
             "low": symbol_values["low"],
             "high": symbol_values["high"],
             "open": symbol_values["open"],
             "close": symbol_values["close"]
         },
-        "history": day_values
     }
     return response
 
@@ -137,9 +136,9 @@ async def view_history(history: StocksRequest):
 @router.post("/historic-price", response_model=HistoricResponse)
 async def view_history(history: HistoricRequest):
     evaluate = {
-        "symbol": history.symbol,
+        "dateFrom": history.dateFrom,
         "dateTo": history.dateTo,
-        "dateFrom": history.dateFrom
+        "symbol": history.symbol,
     }
     symbol_status = evaluate_symbol(evaluate)
     if not symbol_status or len(symbol_status["data"]) == 0:
