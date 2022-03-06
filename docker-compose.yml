@@ -6,7 +6,7 @@ services:
    ports:
     - 3307:3306
    environment:
-     MYSQL_DATABASE: path
+     MYSQL_DATABASE: vest
      MYSQL_ROOT_PASSWORD: 123456ABC
    volumes:
     - ./dump:/docker-entrypoint-initdb.d
