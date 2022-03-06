@@ -41,7 +41,6 @@ class DataBase(metaclass=Singleton):
     
     def insert_order(self, data):
         try:
-            
             query='''INSERT INTO orders VALUES (%(action)s,%(symbol)s ,%(price)s ,%(shares)s ,%(datetime)s ); '''
             self.__cursor.execute(query, data)
             self.__conn.commit()
@@ -58,9 +57,9 @@ class DataBase(metaclass=Singleton):
             self.__cursor.execute(query, data)
             exists = self.__cursor.fetchone()
             if exists["total"] != 0:
-                query='''UPDATE shares SET amount = amount {} {} WHERE symbol = %(symbol)s '''.format(operation, data["shares"])
+                query='''UPDATE shares SET shares = shares {} {} WHERE symbol = %(symbol)s '''.format(operation, data["shares"])
             else:
-                query = '''INSERT INTO shares VALUES ( %(shares)s, %(symbol)s);'''
+                query = '''INSERT INTO shares VALUES (%(symbol)s,  %(shares)s);'''
             
             self.__cursor.execute(query, data)
             self.__conn.commit()

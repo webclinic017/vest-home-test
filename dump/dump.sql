@@ -3,7 +3,7 @@ USE `vest`;
 
 CREATE TABLE `shares` (
 	`symbol` CHAR(50) NULL DEFAULT NULL,
-	`amount` FLOAT NULL DEFAULT NULL
+	`shares` FLOAT NULL DEFAULT NULL
 )
 COLLATE='utf8mb4_0900_ai_ci'
 ;

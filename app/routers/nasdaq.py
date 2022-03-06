@@ -119,10 +119,10 @@ async def view_history(history: StocksRequest):
         })
         
     response = {
-        "curentValue": status["shares"]["amount"] * symbol_values["open"],
+        "curentValue": status["shares"]["shares"] * symbol_values["open"],
         "currentPrice":  symbol_values["open"],
         "history": day_values,
-        "shares": status["shares"]["amount"],
+        "shares": status["shares"]["shares"],
         "dayValues":{
             "low": symbol_values["low"],
             "high": symbol_values["high"],
