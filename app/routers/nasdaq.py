@@ -25,7 +25,6 @@ def evaluate_symbol(data, today: bool = False):
         url ='http://api.marketstack.com/v1/eod?access_key=fe26f8f3e1722807bb9885aff7d0a88b&symbols={}&limit=1'.format(
             symbol.upper()
         )
-    print(url)
     request = requests.get(url=url)
     if request.status_code == 200:
         trade_value = request.json()
@@ -108,7 +107,6 @@ async def view_history(history: StocksRequest):
     })
     day_values = []
     for symbol_value in status["historical"]:
-        print(symbol_value)
         balance = 100 - (
                 float(symbol_values["open"])* 100 / 
                 float(symbol_value["price"])

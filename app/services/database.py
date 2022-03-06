@@ -51,19 +51,16 @@ class DataBase(metaclass=Singleton):
             
     def update_shares(self, data):
         try:
-            print(data)
             operation = "+" 
             if data["action"] != "buy":
                 operation = "-"
             query = ''' SELECT COUNT(*) AS total FROM shares WHERE   symbol = %(symbol)s'''
             self.__cursor.execute(query, data)
             exists = self.__cursor.fetchone()
-            print(exists)
             if exists["total"] != 0:
                 query='''UPDATE shares SET amount = amount {} {} WHERE symbol = %(symbol)s '''.format(operation, data["shares"])
             else:
                 query = '''INSERT INTO shares VALUES ( %(shares)s, %(symbol)s);'''
-            print(query)
             
             self.__cursor.execute(query, data)
             self.__conn.commit()
