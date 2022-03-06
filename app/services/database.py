@@ -61,3 +61,40 @@ class DataBase(metaclass=Singleton):
         except Error  as err:
             log.error(err)
             log.error('update_shares')
+    
+    def get_status(self,data):
+        try:
+            shares = self.get_shares(data)
+            historical = self.get_historical(data)
+            
+            return {"shares": shares, "historical": historical}  
+        except Error as err:
+            log.error(err)
+            log.error('get_status')
+    
+    def get_shares(self,data):
+        try:
+            query = ''' SELECT * FROM shares WHERE  symbol=%(symbol)s;'''
+            self.__cursor.execute(query, data)
+            result = self.__cursor.fetchone()
+            return result  
+        except Error as err:
+            log.error(err)
+            log.error('get_shares')
+    
+    def get_historical(self,data):
+        try:
+            if data["dateFrom"] and data["dateTo"]:
+                query = ''' SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy" and datetime >= %(dateFrom)s and datetime <= %(dateTo)s;'''
+            elif data["dateFrom"]:
+                query = ''' SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy" and datetime >= %(dateFrom)s ;'''
+            else:
+                query = ''' SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy";'''
+            self.__cursor.execute(query, data)
+            result = self.__cursor.fetchall()
+            return result  
+        except Error as err:
+            log.error(err)
+            log.error('get_historical')
+
+    
