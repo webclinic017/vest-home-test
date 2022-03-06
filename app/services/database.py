@@ -1,3 +1,4 @@
+from genericpath import exists
 from .logger import log
 from mysql.connector import Error, errorcode, connect
 
@@ -40,9 +41,7 @@ class DataBase(metaclass=Singleton):
     
     def insert_order(self, data):
         try:
-            operation = "+" 
-            if data["action"] != "buy":
-                operation = "-"
+            
             query='''INSERT INTO orders VALUES (%(action)s,%(symbol)s ,%(price)s ,%(shares)s ,%(datetime)s ); '''
             self.__cursor.execute(query, data)
             self.__conn.commit()
@@ -52,10 +51,20 @@ class DataBase(metaclass=Singleton):
             
     def update_shares(self, data):
         try:
+            print(data)
             operation = "+" 
             if data["action"] != "buy":
                 operation = "-"
-            query='''UPDATE shares SET amount = amount {} {} WHERE symbol = %(symbol)s '''.format(operation, data["shares"])
+            query = ''' SELECT COUNT(*) AS total FROM shares WHERE   symbol = %(symbol)s'''
+            self.__cursor.execute(query, data)
+            exists = self.__cursor.fetchone()
+            print(exists)
+            if exists["total"] != 0:
+                query='''UPDATE shares SET amount = amount {} {} WHERE symbol = %(symbol)s '''.format(operation, data["shares"])
+            else:
+                query = '''INSERT INTO shares VALUES ( %(shares)s, %(symbol)s);'''
+            print(query)
+            
             self.__cursor.execute(query, data)
             self.__conn.commit()
         except Error  as err:
@@ -84,12 +93,7 @@ class DataBase(metaclass=Singleton):
     
     def get_historical(self,data):
         try:
-            if data["dateFrom"] and data["dateTo"]:
-                query = ''' SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy" and datetime >= %(dateFrom)s and datetime <= %(dateTo)s;'''
-            elif data["dateFrom"]:
-                query = ''' SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy" and datetime >= %(dateFrom)s ;'''
-            else:
-                query = ''' SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy";'''
+            query = '''SELECT * FROM orders WHERE symbol=%(symbol)s and action="buy";'''
             self.__cursor.execute(query, data)
             result = self.__cursor.fetchall()
             return result  
