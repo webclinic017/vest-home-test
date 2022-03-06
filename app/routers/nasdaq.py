@@ -1,22 +1,31 @@
+from xmlrpc.client import boolean
 from fastapi import APIRouter, HTTPException
 import requests
-from app.common import symbol
 from ..models.nasdaq import *
 from ..services.database import *
 
 router = APIRouter()
 
-def evaluate_symbol(symbol: str = "", date_from: str = "", date_to: str = ""):
-    symbol = symbol.upper()
-    if date_from:
-        date_from = "&date_from=" + date_from
-    if date_to:
-        date_to = "&date_to=" + date_to
+def evaluate_symbol(data, today: bool = False):
+    symbol: str = data["symbol"]
+    date_from = ""
+    date_to = ""
+    if "dateFrom" in data and data["dateFrom"]:
+        date_from = "&date_from=" +  data["dateFrom"]
+        
+    if "dateTo" in data and data["dateTo"]:
+        date_to = "&date_to=" + data["dateTo"]
     url ='http://api.marketstack.com/v1/eod?access_key=fe26f8f3e1722807bb9885aff7d0a88b&symbols={}{}{}'.format(
-            symbol, 
+            symbol.upper(), 
             date_from, 
             date_to
     )
+    
+    if today == True:
+        url ='http://api.marketstack.com/v1/eod?access_key=fe26f8f3e1722807bb9885aff7d0a88b&symbols={}&limit=1'.format(
+            symbol.upper()
+        )
+    print(url)
     request = requests.get(url=url)
     if request.status_code == 200:
         trade_value = request.json()
@@ -31,7 +40,12 @@ def evaluate_symbol(symbol: str = "", date_from: str = "", date_to: str = ""):
 
 @router.post("/trade", response_model=TradeResponse)
 async def trade(trade: TradeRequest):
-    symbol_status = evaluate_symbol(trade.symbol)
+    evaluate = {
+        "symbol": trade.symbol,
+        "action": trade.action,
+        "shares": trade.shares
+    }
+    symbol_status = evaluate_symbol(evaluate, today=True)
     if not symbol_status or len(symbol_status["data"]) == 0:
         raise HTTPException(status_code=400, detail="Symbol data was not found")
     
@@ -66,7 +80,7 @@ async def trade(trade: TradeRequest):
         }
         save_order = DataBase()
         save_order.update_status(order)
-        return 200, {
+        return {
             "message": "sell successful",
             "price": symbol_values["open"],
             "shares": trade.shares,
@@ -76,46 +90,21 @@ async def trade(trade: TradeRequest):
         raise HTTPException(status_code=400, detail="action was not found")
 
 
-@router.post("/list-stocks")
-# @router.post("/historical-value", response_model=HistoricalResponse)
+@router.post("/list-stocks", response_model=StocksResponse)
 async def view_history(history: StocksRequest):
-    # symbol_status = evaluate_symbol(trade.symbol)
-    symbol_status = {
-        "pagination": {
-        "limit": 100,
-        "offset": 0,
-        "count": 100,
-        "total": 253
-        },
-        "data": [
-        {
-        "open": 164.49,
-        "high": 165.55,
-        "low": 162.11,
-        "close": 163.17,
-        "volume": 83819592,
-        "adj_high": None,
-        "adj_low": None,
-        "adj_close": 163.17,
-        "adj_open": None,
-        "adj_volume": None,
-        "split_factor": 1,
-        "dividend": 0,
-        "symbol": "AAPL",
-        "exchange": "XNAS",
-        "date": "2022-03-04T00:00:00+0000"
-        },
-    ]}
+    evaluate = {
+        "symbol": history.symbol,
+    }
+    evaluate_today = evaluate_symbol(evaluate, True)
+
     
-    if not symbol_status or len(symbol_status["data"]) == 0:
+    if not evaluate_today or len(evaluate_today["data"]) == 0:
         raise HTTPException(status_code=400, detail="Symbol data was not found")
     
-    symbol_values = symbol_status["data"][0]
+    symbol_values = evaluate_today["data"][0]
     get_status = DataBase()
     status = get_status.get_status({
         "symbol": history.symbol,
-        "dateFrom": history.dateFrom,
-        "dateTo": history.dateTo
     })
     day_values = []
     for symbol_value in status["historical"]:
@@ -127,7 +116,7 @@ async def view_history(history: StocksRequest):
         day_values.append({
             "balance": str(round(balance, 2)) + "%",
             "currentPrice": symbol_values["open"],
-            "orderDay": symbol_value["datetime"],
+            "orderDay": str(symbol_value["datetime"]),
             "sharePrice": symbol_value["price"],
             "shares": symbol_value["shares"]
         })
@@ -141,19 +130,20 @@ async def view_history(history: StocksRequest):
             "high": symbol_values["high"],
             "open": symbol_values["open"],
             "close": symbol_values["close"]
-        }
+        },
+        "history": day_values
     }
-    return response, day_values
+    return response
 
 
 @router.post("/historic-price", response_model=HistoricResponse)
 async def view_history(history: HistoricRequest):
-    symbol_status = evaluate_symbol(
-        symbol=history.symbol, 
-        date_from=history.dateFrom,
-        date_to=history.dateTo
-    )
-    
+    evaluate = {
+        "symbol": history.symbol,
+        "dateTo": history.dateTo,
+        "dateFrom": history.dateFrom
+    }
+    symbol_status = evaluate_symbol(evaluate)
     if not symbol_status or len(symbol_status["data"]) == 0:
         raise HTTPException(status_code=400, detail="Symbol data was not found")
     
