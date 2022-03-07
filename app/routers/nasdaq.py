@@ -14,14 +14,14 @@ def evaluate_symbol(data, today: bool = False):
         
     if "dateTo" in data and data["dateTo"]:
         date_to = "&date_to=" + data["dateTo"]
-    url ='http://api.marketstack.com/v1/eod?access_key=fe26f8f3e1722807bb9885aff7d0a88b&symbols={}{}{}'.format(
+    url ='http://api.marketstack.com/v1/eod?access_key=918cf4e6a7738578d895742a31e711f9&symbols={}{}{}'.format(
             symbol.upper(), 
             date_from, 
             date_to
     )
     
     if today == True:
-        url ='http://api.marketstack.com/v1/eod?access_key=fe26f8f3e1722807bb9885aff7d0a88b&symbols={}&limit=1'.format(
+        url ='http://api.marketstack.com/v1/eod?access_key=918cf4e6a7738578d895742a31e711f9&symbols={}&limit=1'.format(
             symbol.upper()
         )
     request = requests.get(url=url)
